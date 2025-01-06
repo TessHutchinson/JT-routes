@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Interactive Climbing Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        #filter-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        .filter-section {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .filter-section:last-child {
+            border-bottom: none;
+        }
+        .filter-section h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .filter-options input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .filter-options label:hover {
+            background: #f0f0f0;
+            border-radius: 4px;
+            padding: 2px 5px;
+            transition: background 0.2s ease;
+        }
+        .mapboxgl-popup{
+            max-width: 300px;}
+        .mapboxgl-popup-content{
+            padding: 15px;
+            font-family: Arial, sans-serif;
+        }
+        .route-info {
+            margin: 5px 0;;
+        }
+        .route-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="filter-controls">
+        <div class="filter-section">
+            <h4>Route Type</h4>
+            <label><input type="checkbox" id="selectAllRoutes" checked> Select All Routes</label><br>
+            <label><input type="checkbox" name="routeType" value="Trad" checked>Trad</label><br>
+            <label><input type="checkbox" name="routeType" value="Boulder" checked>Boulder</label><br>
+            <label><input type="checkbox" name="routeType" value="Trad, TR" checked>Trad, TR</label><br>
+            <label><input type="checkbox" name="routeType" value="Sport" checked>Sport</label><br>
+            <label><input type="checkbox" name="routeType" value="Trad, Boulder" checked>Trad, Boulder</label><br>
+            <label><input type="checkbox" name="routeType" value="Sport, TR" checked>Sport, TR</label><br>
+            <label><input type="checkbox" name="routeType" value="Trad, Aid" checked>Trad Aid</label><br>
+        </div>
+ 
+
+        <div class="filter-section">
+            <h4>Grade</h4>
+            <label><input type="checkbox" id="selectAllGrades" checked> Select All Grades</label><br>
+            <label><input type="checkbox" name="baseRating" value="4th" checked> 4th</label><br>
+            <label><input type="checkbox" name="baseRating" value="3rd" checked> 3rd</label><br>
+            <label><input type="checkbox" name="baseRating" value="easy 5th" checked> easy 5th</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.1 YDS" checked> 5.1</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.3 YDS" checked> 5.3</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.4 YDS" checked> 5.4</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.5 YDS" checked> 5.5</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.6 YDS" checked> 5.6</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.7 YDS" checked> 5.7</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.8 YDS" checked> 5.8</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.9 YDS" checked> 5.9</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.10 YDS" checked> 5.10</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.11 YDS" checked> 5.11</label><br>
+            <label><input type="checkbox" name="baseRating" value="5.12 YDS" checked> 5.12</label><br>
+            <label><input type="checkbox" name="baseRating" value="V0" checked> V0</label><br>
+            <label><input type="checkbox" name="baseRating" value="V1" checked> V1</label><br>
+            <label><input type="checkbox" name="baseRating" value="V2" checked> V2</label><br>
+            <label><input type="checkbox" name="baseRating" value="V3" checked> V3</label><br>
+            <label><input type="checkbox" name="baseRating" value="V4" checked> V4</label><br>
+            <label><input type="checkbox" name="baseRating" value="V5" checked> V5</label><br>
+            <label><input type="checkbox" name="baseRating" value="V6" checked> V6</label><br>
+            <label><input type="checkbox" name="baseRating" value="V7" checked> V7</label><br>
+            <label><input type="checkbox" name="baseRating" value="V8" checked> V8</label><br>
+            <label><input type="checkbox" name="baseRating" value="V9" checked> V9</label><br>
+            <label><input type="checkbox" name="baseRating" value="V10" checked> V10</label><br>
+            <label><input type="checkbox" name="baseRating" value="V11" checked> V11</label><br>
+            <label><input type="checkbox" name="baseRating" value="V12" checked> V12</label><br>
+        </div>
+    </div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoidGVzczEwIiwiYSI6ImNtNWo0MDh0YzBseTEya3B1aDFqYnJobTIifQ.cUCyDvWiPbgjJxPxyMv9Qg'; 
+        const LAYERNAME = 'cleaned-joshua-tree-all-dgabpz';
+        //const LAYERNAME = "cleaned-jtc-int-1ugchj";
+        const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/tess10/cm5jzgbdx003401rahg4c5jeb',
+        center: [-116.1669, 34.0113],
+        zoom: 10,
+        maxBounds: [
+        [-117.0, 33.5],
+        [-115.0, 34.8]  // Northeast coordinates
+        ],
+
+        debug: true // Enable debugging
+        });
+
+        map.on('style.load', () => {
+            if (!map.getLayer(LAYERNAME)) {
+            console.error('Layer not found in map style');
+            return;
+        }
+
+            const filterControls = document.getElementById('filter-controls');
+            const selectAllRoutes = document.getElementById('selectAllRoutes');
+            const selectAllGrades = document.getElementById('selectAllGrades');
+            const routeTypeCheckboxes = filterControls.querySelectorAll('input[name="routeType"]');
+            const baseRatingCheckboxes = filterControls.querySelectorAll('input[name="baseRating"]');
+
+            function updateFilter() {
+                const selectedTypes = Array.from(routeTypeCheckboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.value);
+
+                const selectedRatings = Array.from(baseRatingCheckboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.value);
+
+                map.setFilter(LAYERNAME, [
+                    'all',
+                    ['in', ['get', 'Route Type'], ['literal', selectedTypes]],
+                    ['in', ['get', 'Base Rating'], ['literal', selectedRatings]]
+                ]);
+            }
+
+            selectAllRoutes.addEventListener('change', (e) => {
+                routeTypeCheckboxes.forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+                updateFilter();
+            });
+
+            selectAllGrades.addEventListener('change', (e) => {
+                baseRatingCheckboxes.forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+                updateFilter();
+            });
+
+            // Update "Select All" state when individual checkboxes change
+            routeTypeCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    selectAllRoutes.checked = Array.from(routeTypeCheckboxes).every(cb => cb.checked);
+                    updateFilter();
+                });
+            });
+
+            baseRatingCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    selectAllGrades.checked = Array.from(baseRatingCheckboxes).every(cb => cb.checked);
+                    updateFilter();
+                });
+            });
+
+            routeTypeCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateFilter);
+            });
+
+            baseRatingCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateFilter);
+            });
+
+            updateFilter(); // Apply the initial filter
+
+            // Add click event for points
+            map.on('mouseenter', LAYERNAME, (e) => {
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const properties = e.features[0].properties;
+                
+                // Create popup content
+                const popupContent = `
+                    <div class="route-info">
+                        <div class="route-name">${properties.Route}</div>
+                        <div>Grade: ${properties['Base Rating']}</div>
+                        <div>Type: ${properties['Route Type']}</div>
+                        <div>Area: ${properties.Area}</div>
+                        <div>Click to view route details</div>
+                    
+                    </div>
+                `;
+                 // Create and store popup
+                popup = new mapboxgl.Popup({
+                    closeButton: false,
+                    closeOnClick: false
+                })
+                .setLngLat(coordinates)
+                .setHTML(popupContent)
+                .addTo(map);
+                map.getCanvas().style.cursor = 'pointer';
+            });
+        map.on('click', LAYERNAME, (e) => {
+        const properties = e.features[0].properties;
+        if (properties.URL) {
+            window.open(properties.URL, '_blank');
+        }
+});
+         // Remove popup on mouse leave
+    map.on('mouseleave', LAYERNAME, () => {
+        if (popup) {
+            popup.remove();
+            popup = null;
+        }
+        map.getCanvas().style.cursor = '';
+    });
+});
+    </script>
+</body>
+</html>
