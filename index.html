@@ -163,10 +163,9 @@
 
         map.on('style.load', () => {
             if (!map.getLayer(LAYERNAME)) {
-            console.error('Layer not found in map style');
-            return;
-        }
-
+                console.error('Layer not found in map style');
+                return;
+            }
             const filterControls = document.getElementById('filter-controls');
             const selectAllRoutes = document.getElementById('selectAllRoutes');
             const selectAllGrades = document.getElementById('selectAllGrades');
@@ -228,47 +227,78 @@
 
             updateFilter(); // Apply the initial filter
 
-            // Add click event for points
-            map.on('mouseenter', LAYERNAME, (e) => {
-                const coordinates = e.features[0].geometry.coordinates.slice();
-                const properties = e.features[0].properties;
-                
-                // Create popup content
-                const popupContent = `
-                    <div class="route-info">
-                        <div class="route-name">${properties.Route}</div>
-                        <div>Grade: ${properties['Base Rating']}</div>
-                        <div>Type: ${properties['Route Type']}</div>
-                        <div>Area: ${properties.Area}</div>
-                        <div>Click to view route details</div>
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                // Mobile behavior: click to show popup
+                map.on('click', LAYERNAME, (e) => {
+                    const coordinates = e.features[0].geometry.coordinates.slice();
+                    const properties = e.features[0].properties;
                     
-                    </div>
-                `;
-                 // Create and store popup
-                popup = new mapboxgl.Popup({
-                    closeButton: false,
-                    closeOnClick: false
-                })
-                .setLngLat(coordinates)
-                .setHTML(popupContent)
-                .addTo(map);
-                map.getCanvas().style.cursor = 'pointer';
-            });
-        map.on('click', LAYERNAME, (e) => {
-        const properties = e.features[0].properties;
-        if (properties.URL) {
-            window.open(properties.URL, '_blank');
-        }
-});
-         // Remove popup on mouse leave
-    map.on('mouseleave', LAYERNAME, () => {
-        if (popup) {
-            popup.remove();
-            popup = null;
-        }
-        map.getCanvas().style.cursor = '';
-    });
-});
+                    const popupContent = `
+                        <div class="route-info">
+                            <div class="route-name">${properties.Route}</div>
+                            <div>Grade: ${properties['Base Rating']}</div>
+                            <div>Type: ${properties['Route Type']}</div>
+                            <div>Area: ${properties.Area}</div>
+                            <a href="${properties.URL}" target="_blank">View route details</a>
+                        </div>
+                    `;
+                    
+                    // Remove existing popup if any
+                    if (popup) {
+                        popup.remove();
+                    }
+                    
+                    popup = new mapboxgl.Popup({
+                        closeButton: true,
+                        closeOnClick: true
+                    })
+                    .setLngLat(coordinates)
+                    .setHTML(popupContent)
+                    .addTo(map);
+                });
+            }
+            else{
+                map.on('mouseenter', LAYERNAME, (e) => {
+                    const coordinates = e.features[0].geometry.coordinates.slice();
+                    const properties = e.features[0].properties;
+                    
+                    // Create popup content
+                    const popupContent = `
+                        <div class="route-info">
+                            <div class="route-name">${properties.Route}</div>
+                            <div>Grade: ${properties['Base Rating']}</div>
+                            <div>Type: ${properties['Route Type']}</div>
+                            <div>Area: ${properties.Area}</div>
+                            <div>Click to view route details</div>
+                        
+                        </div>
+                    `;
+                    // Create and store popup
+                    popup = new mapboxgl.Popup({
+                        closeButton: false,
+                        closeOnClick: false
+                    })
+                    .setLngLat(coordinates)
+                    .setHTML(popupContent)
+                    .addTo(map);
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+                map.on('click', LAYERNAME, (e) => {
+                    const properties = e.features[0].properties;
+                    if (properties.URL) {
+                        window.open(properties.URL, '_blank');
+                    }
+                });
+                map.on('mouseleave', LAYERNAME, () => {
+                    if (popup) {
+                        popup.remove();
+                        popup = null;
+                    }
+                    map.getCanvas().style.cursor = '';
+                });
+            };
+        });
     </script>
 </body>
 </html>
